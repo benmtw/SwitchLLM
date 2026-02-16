@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+env_changes.tmp
+config.json
+models_cache.json
