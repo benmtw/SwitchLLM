@@ -12,6 +12,7 @@ CONFIG_FILE = BASE_DIR / "config.json"
 ENV_CHANGES_FILE = BASE_DIR / "env_changes.tmp"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/models"
 DASHSCOPE_API_URL = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models"
+NVIDIA_NIM_API_URL = "https://integrate.api.nvidia.com/v1/models"
 
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
@@ -53,6 +54,10 @@ class Config:
     @property
     def dashscope_key(self) -> str:
         return self._data.get("dashscope_api_key", "")
+
+    @property
+    def nvidia_key(self) -> str:
+        return self._data.get("nvidia_api_key", "")
 
     def update_profile_model(self, profile_name: str, model: str):
         if profile_name in self.profiles:
@@ -110,6 +115,10 @@ class SwitchLLMApp(ctk.CTk):
             models = self.fetch_dashscope_models()
             self.model_lists["dashscope"] = [m["id"] for m in models]
 
+        if self.config.nvidia_key and "PLEASE_SET" not in self.config.nvidia_key:
+            models = self.fetch_nvidia_models()
+            self.model_lists["nvidia_nim"] = [m["id"] for m in models]
+
         # Show model dropdown if active profile needs it
         if self.config.active_profile in self.model_lists:
             self.show_model_dropdown(self.config.active_profile)
@@ -129,12 +138,18 @@ class SwitchLLMApp(ctk.CTk):
         ]
         self.model_combobox.configure(values=filtered_models)
 
+    PROFILE_DISPLAY_NAMES = {
+        "dashscope": "DASHSCOPE (Alibaba Cloud)",
+        "nvidia_nim": "NVIDIA NIM",
+    }
+
     def create_profile_radiobuttons(self):
         for profile_name in self.config.profiles.keys():
+            display_name = self.PROFILE_DISPLAY_NAMES.get(profile_name, profile_name.upper())
             rb = ctk.CTkRadioButton(
-                self.profiles_frame, 
-                text=profile_name.upper(), 
-                variable=self.profile_var, 
+                self.profiles_frame,
+                text=display_name,
+                variable=self.profile_var,
                 value=profile_name,
                 command=self.on_profile_select
             )
@@ -188,6 +203,22 @@ class SwitchLLMApp(ctk.CTk):
             print(f"Failed to fetch DashScope models: {e}")
         return []
 
+    def fetch_nvidia_models(self):
+        print("Fetching models from NVIDIA NIM...")
+        try:
+            response = requests.get(
+                NVIDIA_NIM_API_URL,
+                headers={"Authorization": f"Bearer {self.config.nvidia_key}"}
+            )
+            if response.status_code == 200:
+                data = response.json().get("data", [])
+                models = [{"id": m["id"]} for m in data]
+                models.sort(key=lambda x: x["id"])
+                return models
+        except Exception as e:
+            print(f"Failed to fetch NVIDIA NIM models: {e}")
+        return []
+
     def on_model_change(self, choice):
         if self._active_model_profile:
             self.config.update_profile_model(self._active_model_profile, choice)
@@ -223,6 +254,14 @@ class SwitchLLMApp(ctk.CTk):
         elif profile_type == "dashscope":
             env_vars["ANTHROPIC_BASE_URL"] = "https://dashscope-intl.aliyuncs.com/compatible-mode"
             env_vars["ANTHROPIC_AUTH_TOKEN"] = self.config.dashscope_key
+            selected_model = profile_data.get("default_model")
+            if selected_model:
+                env_vars["ANTHROPIC_DEFAULT_SONNET_MODEL"] = selected_model
+                env_vars["ANTHROPIC_DEFAULT_OPUS_MODEL"] = selected_model
+                env_vars["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = selected_model
+        elif profile_type == "nvidia_nim":
+            env_vars["ANTHROPIC_BASE_URL"] = "https://integrate.api.nvidia.com"
+            env_vars["ANTHROPIC_AUTH_TOKEN"] = self.config.nvidia_key
             selected_model = profile_data.get("default_model")
             if selected_model:
                 env_vars["ANTHROPIC_DEFAULT_SONNET_MODEL"] = selected_model

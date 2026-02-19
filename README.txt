@@ -21,6 +21,7 @@ Edit `config.json` to add your API keys and customize profiles.
 - For most providers, you need to set `ANTHROPIC_BASE_URL` and `ANTHROPIC_API_KEY`.
 - For OpenRouter, simply add your `openrouter_api_key` to the top level of the config file.
 - For DashScope (Alibaba Cloud / Qwen), add your `dashscope_api_key` to the top level of the config file.
+- For NVIDIA NIM, add your `nvidia_api_key` to the top level of the config file.
 
 How to Run
 ----------
@@ -65,6 +66,7 @@ Features
 - **GLM**: Pre-configured for Zhipu AI (GLM models).
 - **OpenRouter**: Fetches available models dynamically from OpenRouter and allows you to select one from a dropdown list.
 - **DashScope (Qwen)**: Fetches available models dynamically from Alibaba Cloud's DashScope API (Singapore endpoint) and allows you to select one from a dropdown list. Supports Qwen-Max, Qwen-Plus, Qwen-Turbo, QwQ, and other models available through the OpenAI-compatible API.
+- **NVIDIA NIM**: Fetches available models dynamically from NVIDIA's NIM API and allows you to select one from a dropdown list. Supports 150+ models including Llama, Mistral, DeepSeek, Gemma, Phi, and more.
 - **Claude Code Max**: A special profile that unsets all override environment variables. Use this if you want Claude Code to use your standard Max plan (via standard OAuth login) instead of an API key or custom endpoint.
 
 Qweb pricing:https://www.alibabacloud.com/help/en/model-studio/model-pricing
