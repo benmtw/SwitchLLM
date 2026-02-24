@@ -45,8 +45,20 @@ if (Test-Path $EnvChangesFile) {
 
         Write-Host "Successfully switched profile." -ForegroundColor Green
         Write-Host ""
+
+        # Check if switching to OpenRouter or API-based provider
+        if ($EnvVars.ANTHROPIC_BASE_URL -and $EnvVars.ANTHROPIC_BASE_URL -ne "") {
+            Write-Host "IMPORTANT: If you have previously used Claude Code with" -ForegroundColor Yellow
+            Write-Host "Anthropic's standard OAuth login, run '/logout' in Claude Code" -ForegroundColor Yellow
+            Write-Host "before starting a new session with this provider." -ForegroundColor Yellow
+            Write-Host ""
+        }
+
         Write-Host "To verify variables are set correctly, you can run:" -ForegroundColor Yellow
         Write-Host "    Get-ChildItem Env:ANTHROPIC*" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Inside Claude Code, you can verify with:" -ForegroundColor Yellow
+        Write-Host "    /status" -ForegroundColor Cyan
     }
     catch {
         Write-Host "Error reading environment changes: $_" -ForegroundColor Red

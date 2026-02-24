@@ -246,6 +246,7 @@ class SwitchLLMApp(ctk.CTk):
         if profile_type == "openrouter":
             env_vars["ANTHROPIC_BASE_URL"] = "https://openrouter.ai/api"
             env_vars["ANTHROPIC_AUTH_TOKEN"] = self.config.openrouter_key
+            env_vars["ANTHROPIC_API_KEY"] = ""  # Required by OpenRouter: explicitly blank to prevent conflicts
             selected_model = profile_data.get("default_model")
             if selected_model:
                 env_vars["ANTHROPIC_DEFAULT_SONNET_MODEL"] = selected_model
@@ -253,7 +254,7 @@ class SwitchLLMApp(ctk.CTk):
                 env_vars["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = selected_model
         elif profile_type == "dashscope":
             env_vars["ANTHROPIC_BASE_URL"] = "https://dashscope-intl.aliyuncs.com/compatible-mode"
-            env_vars["ANTHROPIC_AUTH_TOKEN"] = self.config.dashscope_key
+            env_vars["ANTHROPIC_API_KEY"] = self.config.dashscope_key
             selected_model = profile_data.get("default_model")
             if selected_model:
                 env_vars["ANTHROPIC_DEFAULT_SONNET_MODEL"] = selected_model
@@ -262,11 +263,6 @@ class SwitchLLMApp(ctk.CTk):
         elif profile_type == "nvidia_nim":
             env_vars["ANTHROPIC_BASE_URL"] = "https://integrate.api.nvidia.com"
             env_vars["ANTHROPIC_AUTH_TOKEN"] = self.config.nvidia_key
-            selected_model = profile_data.get("default_model")
-            if selected_model:
-                env_vars["ANTHROPIC_DEFAULT_SONNET_MODEL"] = selected_model
-                env_vars["ANTHROPIC_DEFAULT_OPUS_MODEL"] = selected_model
-                env_vars["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = selected_model
         else:
             # Standard Logic (copy keys as is)
             for k, v in profile_data.items():

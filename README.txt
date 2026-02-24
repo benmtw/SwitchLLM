@@ -1,5 +1,5 @@
 Switch Claude LLM Provider Tool
-===============================
+================================
 
 What is this?
 -------------
@@ -18,10 +18,62 @@ Setup
 Configuration
 -------------
 Edit `config.json` to add your API keys and customize profiles.
-- For most providers, you need to set `ANTHROPIC_BASE_URL` and `ANTHROPIC_API_KEY`.
-- For OpenRouter, simply add your `openrouter_api_key` to the top level of the config file.
-- For DashScope (Alibaba Cloud / Qwen), add your `dashscope_api_key` to the top level of the config file.
-- For NVIDIA NIM, add your `nvidia_api_key` to the top level of the config file.
+
+Configuration Examples by Provider:
+
+OpenRouter (Dynamic model selection):
+{
+  "openrouter_api_key": "sk-or-v1-your-key-here"
+}
+
+DashScope / Qwen (Dynamic model selection):
+{
+  "dashscope_api_key": "sk-your-dashscope-key"
+}
+
+NVIDIA NIM (Dynamic model selection):
+{
+  "nvidia_api_key": "nvapi-your-key-here"
+}
+
+Standard Profiles (add under "profiles" in config.json):
+
+Kimi (Moonshot AI):
+{
+  "profiles": {
+    "kimi": {
+      "ANTHROPIC_BASE_URL": "https://api.moonshot.cn/anthropic",
+      "ANTHROPIC_AUTH_TOKEN": "sk-your-kimi-key"
+    }
+  }
+}
+
+GLM (Zhipu AI):
+{
+  "profiles": {
+    "glm": {
+      "ANTHROPIC_BASE_URL": "https://open.bigmodel.cn/api/anthropic",
+      "ANTHROPIC_AUTH_TOKEN": "your-glm-key"
+    }
+  }
+}
+
+DeepSeek:
+{
+  "profiles": {
+    "deepseek": {
+      "ANTHROPIC_BASE_URL": "https://api.deepseek.com",
+      "ANTHROPIC_API_KEY": "sk-your-deepseek-key"
+    }
+  }
+}
+
+Claude Code Max (Standard OAuth):
+{
+  "profiles": {
+    "claude_code_max": {}
+  }
+}
 
 How to Run
 ----------
@@ -35,11 +87,25 @@ Run this command in PowerShell:
 
 If you just run `.\switch.ps1` without the leading dot, the variables will only be set for the duration of the script and will disappear when it finishes.
 
+IMPORTANT: First-Time OpenRouter Users
+--------------------------------------
+If you have previously logged into Claude Code using Anthropic's standard OAuth (your Claude Max plan), you MUST run the `/logout` command in Claude Code BEFORE switching to OpenRouter or any other API-based provider.
+
+1. Start a Claude Code session: claude
+2. Run: /logout
+3. Exit Claude Code
+4. Run this tool to switch providers
+
+This clears cached OAuth credentials that would otherwise conflict with the API key authentication.
+
 Verification
 ------------
 To verify that the variables have been set correctly in your current session, run:
 
     Get-ChildItem Env:ANTHROPIC*
+
+You can also verify inside Claude Code by running:
+    /status
 
 Easy Access (Optional)
 ----------------------
@@ -53,7 +119,7 @@ NOTE: "Windows PowerShell" and "PowerShell" (v7) use different profile files. Fo
 2. Add this function to the end of the file:
 
    function switch-llm {
-       . "d:\bentemp\SwitchLLM\switch.ps1"
+       . "C:\path\to\SwitchLLM\switch.ps1"
    }
 
 3. Save and close notepad. Restart PowerShell.
@@ -62,22 +128,35 @@ Now you can just type `switch-llm` to launch the tool!
 
 Features
 --------
-- **Kimi**: Pre-configured for Kimi API.
+- **Kimi**: Pre-configured for Kimi (Moonshot AI) API.
 - **GLM**: Pre-configured for Zhipu AI (GLM models).
-- **OpenRouter**: Fetches available models dynamically from OpenRouter and allows you to select one from a dropdown list.
-- **DashScope (Qwen)**: Fetches available models dynamically from Alibaba Cloud's DashScope API (Singapore endpoint) and allows you to select one from a dropdown list. Supports Qwen-Max, Qwen-Plus, Qwen-Turbo, QwQ, and other models available through the OpenAI-compatible API.
-- **NVIDIA NIM**: Fetches available models dynamically from NVIDIA's NIM API and allows you to select one from a dropdown list. Supports 150+ models including Llama, Mistral, DeepSeek, Gemma, Phi, and more.
+- **OpenRouter**: Fetches available models dynamically from OpenRouter and allows you to select one from a dropdown list. Provides provider failover and usage analytics.
+- **DashScope (Qwen)**: Fetches available models dynamically from Alibaba Cloud's DashScope API (Singapore endpoint) and allows you to select one from a dropdown list. Supports Qwen-Max, Qwen-Plus, Qwen-Turbo, QwQ, and other models.
+- **NVIDIA NIM**: Fetches available models dynamically from NVIDIA's NIM API. Supports 150+ free models including Llama, Mistral, DeepSeek, Gemma, Phi, and more. NOTE: Requires a proxy/translator for full compatibility.
 - **Claude Code Max**: A special profile that unsets all override environment variables. Use this if you want Claude Code to use your standard Max plan (via standard OAuth login) instead of an API key or custom endpoint.
 
-Qweb pricing:https://www.alibabacloud.com/help/en/model-studio/model-pricing
+Provider Documentation Links
+-----------------------------
+- OpenRouter: https://openrouter.ai/docs/guides/guides/claude-code-integration
+- DashScope: https://help.aliyun.com/zh/model-studio/claude-code
+- GLM/Zhipu: https://open.bigmodel.cn/dev/anthropic
+- DeepSeek: https://api-docs.deepseek.com/zh-cn/guides/anthropic_api
+
+Qwen pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing
 
 Environment Variables Explanation
 --------------------------------
 By default, Claude Code handles everything through its built-in OAuth login flow—no environment variables needed. The credentials are stored in its own config files.
 
-However, this tool uses two specific environment variables as "overrides" for non-standard setups:
+However, this tool uses environment variables as "overrides" for non-standard setups:
 
-1. **ANTHROPIC_AUTH_TOKEN**: Lets you override the default authentication with a raw API key. Useful if you want to use a personal API key (pay-as-you-go), a team/organization key, or authenticate through a CI/CD pipeline.
-2. **ANTHROPIC_BASE_URL**: Lets you point Claude Code at a different endpoint. Useful for routing through a corporate proxy, using an Anthropic-compatible provider (e.g., AWS Bedrock, Google Vertex), or pointing to a local development/testing server.
+1. **ANTHROPIC_AUTH_TOKEN**: Used by most providers (Kimi, GLM, OpenRouter) for API key authentication.
+2. **ANTHROPIC_API_KEY**: Used by some providers (DashScope, DeepSeek) for API key authentication.
+3. **ANTHROPIC_BASE_URL**: Points Claude Code at a different endpoint.
+
+**Important Authentication Rules**:
+- Use EITHER ANTHROPIC_AUTH_TOKEN OR ANTHROPIC_API_KEY, never both simultaneously
+- OpenRouter requires ANTHROPIC_API_KEY be explicitly set to empty string ("")
+- Most providers use ANTHROPIC_AUTH_TOKEN with their API key
 
 **Important**: If you previously set these variables to use another provider (like Kimi or GLM) and now want to go back to your standard Claude Max plan, select the **CLAUDE_CODE_MAX** profile in this tool. This will unset the overrides and allow Claude Code to resume its normal operation.
