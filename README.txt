@@ -32,6 +32,9 @@ DashScope / Qwen (Dynamic model selection):
 }
 
 NVIDIA NIM (Dynamic model selection):
+NOTE: NVIDIA NIM uses the OpenAI API protocol, NOT the Anthropic protocol.
+You need a proxy/translator to use it with Claude Code. See "NVIDIA NIM Setup"
+section below for details.
 {
   "nvidia_api_key": "nvapi-your-key-here"
 }
@@ -98,6 +101,75 @@ If you have previously logged into Claude Code using Anthropic's standard OAuth 
 
 This clears cached OAuth credentials that would otherwise conflict with the API key authentication.
 
+NVIDIA NIM Setup
+----------------
+IMPORTANT: NVIDIA NIM uses the OpenAI API protocol, while Claude Code uses the
+Anthropic API protocol. They are NOT compatible directly. You need a proxy
+service to translate between the two protocols.
+
+The Problem:
+------------
+Claude Code speaks: Anthropic Messages API format
+NVIDIA NIM speaks:  OpenAI API format
+
+Without a translator, requests will fail or behave unpredictably.
+
+Solution: Use a Proxy
+----------------------
+You need to run a proxy server that translates Anthropic-format requests to
+OpenAI-format requests. Here are popular options:
+
+Option 1: cc-nim (Recommended)
+-------------------------------
+A lightweight proxy specifically designed for Claude Code + NVIDIA NIM.
+
+GitHub: https://github.com/Alishahryar1/cc-nim
+
+Setup:
+1. Get NVIDIA API key from https://build.nvidia.com/settings/api-keys
+2. Clone and install:
+   git clone https://github.com/Alishahryar1/cc-nim.git
+   cd cc-nim
+   cp .env.example .env
+   # Edit .env with your NVIDIA_NIM_API_KEY and chosen model
+
+3. Terminal 1 - Start the proxy:
+   uv run uvicorn server:app --host 0.0.0.0 --port 8082
+
+4. Terminal 2 - Add a profile to your config.json:
+   {
+     "profiles": {
+       "nvidia_nim_proxy": {
+         "ANTHROPIC_BASE_URL": "http://localhost:8082",
+         "ANTHROPIC_AUTH_TOKEN": "ccnim"
+       }
+     }
+   }
+
+5. Run this tool and select "nvidia_nim_proxy"
+
+Supported Free Models:
+- meta-llama/llama-3.3-70b-instruct
+- mistralai/mistral-large
+- deepseek/deepseek-chat
+- google/gemma-2-27b-it
+- microsoft/phi-3-medium-128k-instruct
+- And 150+ more
+
+Option 2: Claude Code Router (CCR)
+-----------------------------------
+A general-purpose router that supports multiple providers.
+
+Setup:
+1. Install: npm install -g @clauderouter/cli
+2. Start: ccr ui
+3. Configure NVIDIA NIM in the UI
+4. Restart: ccr code
+
+Option 3: CLIProxyAPI
+----------------------
+Universal adapter for API protocol translation.
+
 Verification
 ------------
 To verify that the variables have been set correctly in your current session, run:
@@ -132,7 +204,7 @@ Features
 - **GLM**: Pre-configured for Zhipu AI (GLM models).
 - **OpenRouter**: Fetches available models dynamically from OpenRouter and allows you to select one from a dropdown list. Provides provider failover and usage analytics.
 - **DashScope (Qwen)**: Fetches available models dynamically from Alibaba Cloud's DashScope API (Singapore endpoint) and allows you to select one from a dropdown list. Supports Qwen-Max, Qwen-Plus, Qwen-Turbo, QwQ, and other models.
-- **NVIDIA NIM**: Fetches available models dynamically from NVIDIA's NIM API. Supports 150+ free models including Llama, Mistral, DeepSeek, Gemma, Phi, and more. NOTE: Requires a proxy/translator for full compatibility.
+- **NVIDIA NIM**: Fetches available models dynamically from NVIDIA's NIM API. Supports 150+ free models including Llama, Mistral, DeepSeek, Gemma, Phi, and more. **WARNING: Requires a proxy/translator (see NVIDIA NIM Setup section below).**
 - **Claude Code Max**: A special profile that unsets all override environment variables. Use this if you want Claude Code to use your standard Max plan (via standard OAuth login) instead of an API key or custom endpoint.
 
 Provider Documentation Links
@@ -141,6 +213,8 @@ Provider Documentation Links
 - DashScope: https://help.aliyun.com/zh/model-studio/claude-code
 - GLM/Zhipu: https://open.bigmodel.cn/dev/anthropic
 - DeepSeek: https://api-docs.deepseek.com/zh-cn/guides/anthropic_api
+- NVIDIA NIM: https://build.nvidia.com
+- cc-nim proxy: https://github.com/Alishahryar1/cc-nim
 
 Qwen pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing
 
