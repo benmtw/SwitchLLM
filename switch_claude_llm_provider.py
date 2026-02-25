@@ -243,7 +243,11 @@ class SwitchLLMApp(ctk.CTk):
 
         profile_type = profile_data.get("type", "")
 
-        if profile_type == "openrouter":
+        # Special case: claude_code_max always clears all ANTHROPIC_* env vars
+        if profile_name == "claude_code_max":
+            pass  # env_vars already initialized to empty strings
+
+        elif profile_type == "openrouter":
             env_vars["ANTHROPIC_BASE_URL"] = "https://openrouter.ai/api"
             env_vars["ANTHROPIC_AUTH_TOKEN"] = self.config.openrouter_key
             env_vars["ANTHROPIC_API_KEY"] = ""  # Required by OpenRouter: explicitly blank to prevent conflicts
